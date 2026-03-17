@@ -11,7 +11,7 @@ from flask import Flask, Response, abort, jsonify, redirect, request, send_from_
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 HTML_DIR = os.path.join(APP_ROOT, "html")
 STATIC_DIR = os.path.join(APP_ROOT, "static")
-DATA_DIR = os.path.join(APP_ROOT, "data")
+DATA_DIR = "/tmp/acacemia-data" if os.environ.get("VERCEL") else os.path.join(APP_ROOT, "data")
 SESSION_FILE = os.path.join(DATA_DIR, "session.json")
 REMINDERS_FILE = os.path.join(DATA_DIR, "reminders.json")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
@@ -55,11 +55,14 @@ def read_json(path: str, default):
 
 
 def write_json(path: str, data) -> None:
-    ensure_data_dir()
-    tmp_path = f"{path}.tmp"
-    with open(tmp_path, "w", encoding="utf-8") as handle:
-        json.dump(data, handle, ensure_ascii=True, indent=2)
-    os.replace(tmp_path, path)
+    try:
+        ensure_data_dir()
+        tmp_path = f"{path}.tmp"
+        with open(tmp_path, "w", encoding="utf-8") as handle:
+            json.dump(data, handle, ensure_ascii=True, indent=2)
+        os.replace(tmp_path, path)
+    except Exception as e:
+        print(f"Storage Error for {path}: {str(e)}")
 
 
 def load_session():
